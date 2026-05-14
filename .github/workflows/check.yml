@@ -1,7 +1,11 @@
 name: check
 
 on:
+  # Restrict push to integration branches; PRs cover everything else. Without
+  # this, a PR's branch-push + the pull_request event both fire and the run
+  # shows up twice. TODO: drop `dev` from the list once `main` is the default.
   push:
+    branches: [main, dev]
   pull_request:
   workflow_dispatch:
 
