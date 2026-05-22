@@ -1,0 +1,22 @@
+name: check
+
+on:
+  # Restrict push to integration branches; PRs cover everything else.
+  # Without this, a PR's branch-push + the pull_request event both fire
+  # and the run shows up twice.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flake-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - run: nix flake check --print-build-logs
