@@ -15,21 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/update-flake-lock@main
-        with:
-          pr-title: "chore: update flake.lock"
-          pr-labels: |
-            dependencies
-            automated
-          pr-body: ${{ steps.generate-body.outputs.body }}
-          token: ${{ secrets.FLAKE_LOCK_TOKEN || github.token }}
       - id: generate-body
         run: |
+          cp flake.lock /tmp/flake.lock.old
+          nix flake update
           {
             echo "body<<EOF"
             echo "## Updated inputs:"
             jq -r \
-              --slurpfile old <(git show HEAD:flake.lock) \
+              --slurpfile old /tmp/flake.lock.old \
               '
               . as $new |
               ($old[0].nodes) as $old_nodes |
@@ -46,3 +40,12 @@ jobs:
               ' flake.lock
             echo "EOF"
           } >> $GITHUB_OUTPUT
+          cp /tmp/flake.lock.old flake.lock
+      - uses: DeterminateSystems/update-flake-lock@main
+        with:
+          pr-title: "chore: update flake.lock"
+          pr-labels: |
+            dependencies
+            automated
+          pr-body: ${{ steps.generate-body.outputs.body }}
+          token: ${{ secrets.FLAKE_LOCK_TOKEN || github.token }}
